@@ -7,22 +7,22 @@ This repository contains the implementation of the methods presented in our pape
 
 The scripts reproduce the main experiments and results presented in the study, which introduces a novel method to classify metabolic reactions based on their functional role in the production of growth. These tools leverage Flux Balance Analysis (FBA) and Flux Variability Analysis (FVA) to:
 
-- Identify essential and redundant reactions and dead reactions at optimal or suboptimal growth.
+- Identify essential, redundant reactions and dead reactions at optimal or suboptimal growth.
 - Compute bottleneck reactions limiting optimal growth.
 - Explain gene essentiality in terms of reaction redundancy.
 
 ## 📁 Repository Contents
 
 - ```growth_limiting_reactions.py```
-Coomputes the number of bottleneck reactions limiting optimal growth 
+Computes the number of bottleneck reactions limiting optimal growth 
 using Flux Variability Analysis (FVA) as described in the paper.
 
 - ```generate_sets.py```
-Processes a list of Genome-Scale Models (GEMs) and computes the functional classification of reactions for each model (essential, redundant, unused).
+Processes a list of Genome-Scale Models (GEMs) and computes the functional classification of reactions for each model (essential, redundant, dead).
 
 - ```generate_single.py```
 Computes the functional classification of reactions for a single GEM
-for different ranges of growth rates, identifying essential, redundant, and unused reactions.
+for different ranges of growth rates, identifying essential, redundant, and dead reactions.
 
 ## ⚙️ Requirements
 
@@ -42,22 +42,19 @@ pip install -r requirements.txt
 
 1. Place your genome-scale models (in SBML or JSON format) in a directory.
 
-2. For reactions limiting growth,
-change the model path in `growth_limiting_reactions.py` to point to your model file and run:
+2. For reactions limiting growth, run:
  run:
     ```bash
-    python growth_limiting_reactions.py
+    python growth_limiting_reactions.py --models <model-path-1.xml> <model-path-2.xml> ...
     ```
-3. For a batch analysis of models,
-change the model paths in `generate_sets.py` to point to your models directory and run:
+3. For a batch analysis of models, run:
     ```bash
-    python generate_sets.py
+    python generate_sets.py --models <model-path-1.xml> <model-path-2.xml> ...
     ```
 
-4. For a single model analysis,
-change the model path in `generate_single.py` to point to your model file and run:
+4. For a single model analysis, run the following pointing to the model file:
     ```bash
-    python generate_single.py
+    python generate_single.py <path-to-your-model.xml>
     ```
 
 ## 📄 License

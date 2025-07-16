@@ -18,6 +18,7 @@ import xlwt
 import warnings
 import time
 import math
+import argparse
 import networkx as nx
 import matplotlib.pyplot as plt
 import cobra
@@ -30,50 +31,7 @@ from contrabass import CobraMetabolicModel
 from pyomo_utils import pyomo_flux_balance_analysis, pyomo_min
 
 
-
 CONST_EPSILON = 1e-08
-
-PATH = "<YOUR-MODELS-PATH HERE>"
-
-COMPUTE_MINIMAL = True
-PRINT_MINIMAL_ERROR = True
-OUTPUT = "output.csv"
-
-growth_rate = 1.0 # 1.0 for optimal growth, <1.0 for suboptimal
-
-MODELS = [
-    "MODEL1507180052",
-    "MODEL1507180006",
-    "MODEL1106080000",
-    "MODEL1507180007",
-    "MODEL1507180030",
-    "MODEL1507180048",
-    "MODEL1507180070",
-    "MODEL1710040000",
-    "MODEL1507180024",
-    "MODEL1507180036",
-    "MODEL1507180021",
-    "MODEL1507180044",
-    "MODEL1507180049",
-    "MODEL1507180068",
-    "MODEL1507180060",
-    "MODEL1507180059",
-    "MODEL1507180013",
-    #"MODEL1507180058",
-    "MODEL1507180022",
-    "MODEL1507180012",
-    "MODEL1507180027",
-    "MODEL1507180011",
-    "MODEL1507180033",
-    "MODEL1507180015",
-    "MODEL1507180064",
-    "MODEL1212060001",
-    "MODEL1507180054",
-    "MODEL1105030000",
-    "MODEL1507180010",
-    "MODEL1507180017"
-]
-
 
 
 def current_milli_time():
@@ -320,7 +278,7 @@ def compute_reactions_sets(MODEL, growth_rate=1.0):
 
 def computation_minimum_reduced_sets(PATH, M, growth_rate=1.0):
     start = current_milli_time()
-    MODEL = PATH + M + ".xml" 
+    MODEL = os.path.join(PATH, M + ".xml")
     print("    Computing set of reactions for growth in model: ", M)
     cbmodel, cbmodel_fva, biomass, \
         essential_reactions_ids, redundant_reactions_ids, dead_reactions_ids, forced_ids, \
@@ -353,15 +311,53 @@ def computation_minimum_reduced_sets(PATH, M, growth_rate=1.0):
     return essential_reactions_ids, redundant_reactions_ids, dead_reactions_ids, forced_ids, \
         RG_FBA_id, minimum_set_growth_ids
         
-        
 
-if __name__ == "__main__":
+# Default model list
+DEFAULT_MODELS = [
+    "MODEL1507180052.xml", "MODEL1507180006.xml", "MODEL1106080000.xml", "MODEL1507180007.xml",
+    "MODEL1507180030.xml", "MODEL1507180048.xml", "MODEL1507180070.xml", "MODEL1710040000.xml",
+    "MODEL1507180024.xml", "MODEL1507180036.xml", "MODEL1507180021.xml", "MODEL1507180044.xml",
+    "MODEL1507180049.xml", "MODEL1507180068.xml", "MODEL1507180060.xml", "MODEL1507180059.xml",
+    "MODEL1507180013.xml", "MODEL1507180022.xml", "MODEL1507180012.xml", "MODEL1507180027.xml",
+    "MODEL1507180011.xml", "MODEL1507180033.xml", "MODEL1507180015.xml", "MODEL1507180064.xml",
+    "MODEL1212060001.xml", "MODEL1507180054.xml", "MODEL1105030000.xml", "MODEL1507180010.xml",
+    "MODEL1507180017.xml"
+]
+
+def main():
+    parser = argparse.ArgumentParser(description="Compute sets of reactions for metabolic models.")
+    parser.add_argument("--models", nargs='*', help="List of model IDs to run (default: full predefined list)")
+    parser.add_argument("--growth-rate", type=float, default=1.0, help="Growth rate for optimization (1.0 = optimal)")
+    # parser.add_argument("--compute-minimal", action="store_true", help="Enable minimal computation flag")
+    # parser.add_argument("--print-minimal-error", action="store_true", help="Print minimal error messages")
+
+    args = parser.parse_args()
+
+    models = args.models if args.models else DEFAULT_MODELS
+    for path in models:
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"Path {path} does not exist.")
+        if not path.endswith(".xml"):
+            raise ValueError("Only XML model files are supported.")
+        # separate directory and file name
 
     print("ModelID\tER\tRR\tDR\tFR\tRG_FBA\tMRG")
 
-    for i in range(0, len(MODELS)):
-        last_time = time.time()
-        ER, RR, DR, FR, RG_FBA, MRG = computation_minimum_reduced_sets(PATH, MODELS[i], growth_rate=growth_rate)
-        now = time.time() - last_time
-        print(f"{MODELS[i]}\t{len(ER)}\t{len(RR)}\t{len(DR)}\t{len(FR)}\t{len(RG_FBA)}\t{len(MRG)}")
-        print(now % 60, " seconds ")
+    for path in models:
+        start_time = time.time()
+        model_dir = os.path.dirname(path)
+        model_name = os.path.basename(path)
+        # get model_name without extension
+        model_name = os.path.splitext(model_name)[0]
+        ER, RR, DR, FR, RG_FBA, MRG = computation_minimum_reduced_sets(
+            model_dir,
+            model_name,
+            growth_rate=args.growth_rate
+        )
+        duration = time.time() - start_time
+        print(f"{model_name}\t{len(ER)}\t{len(RR)}\t{len(DR)}\t{len(FR)}\t{len(RG_FBA)}\t{len(MRG)}")
+        print(f"{duration:.2f} seconds")
+
+
+if __name__ == "__main__":
+    main()
